@@ -12,12 +12,13 @@ import { useParams } from 'react-router-dom';
 import { Navigate } from 'react-router-dom';
 import { Guid } from 'guid-typescript';
 import { UserData } from '../../../model/UserData';
-import { Button, FormControl, InputGroup, Modal } from 'react-bootstrap';
+import { Button, Dropdown, DropdownButton, FormControl, InputGroup, Modal } from 'react-bootstrap';
 import { IScheduleData } from '../../../interfaces/IScheduleData';
 import { EventType, Event } from '../../../model/EventProps';
 import { AppointmentData, aptToIApt, iAptToApt } from '../../../model/AppointmentData';
 import { IAppointmentData } from '../../../interfaces/IAppointmentData';
 import { TimetableLink } from '../../../model/TimetableLink';
+import { Colors } from '../../../utilis/Colors';
 
 export type TimeTableUrl = {
   url: string;
@@ -119,6 +120,12 @@ function Scheduler() {
                 switch (scheduleData.eventType) {
                   case (EventType.add):
                     setAllUsers(allUsers => [...allUsers, ...scheduleData.userDatas]);
+                    break;
+                  case (EventType.edit):
+                    setAllUsers(allUsers => [...allUsers.filter(u => !scheduleData.userDatas.some(s => s.id === u.id)), ...scheduleData.userDatas]);
+                    console.log(allUsersRef.current);
+                    console.log(scheduleData.userDatas);
+
                     break;
                 }
                 updateCount.current +=1;
@@ -311,6 +318,26 @@ function Scheduler() {
 
   }
 
+  function changeUserColor(i:number, user :UserData) {
+    console.log(i);
+    user.themeColor = Colors[i];
+    setUserData(userData => ({...user}));
+    const scheduleData: IScheduleData = {
+      roomID: userData.roomID,
+      name: userData.name,
+      connectionId: '',
+      updateCount: 0,
+      appointments: [],
+      timetableLinks: [],
+      chatMessages: [],
+      userDatas: [user],
+      event: Event.userEvent,
+      eventType: EventType.edit
+    }
+    connection?.send("SendMessage", scheduleData);
+    
+  }
+
 
   if (room === undefined) {
     room = Guid.create().toString();
@@ -389,12 +416,19 @@ function Scheduler() {
         <Panel header="All User Here" key="2" showArrow={true}>
           {allUsers.map(u =>
             <InputGroup key={u.id} className="mb-3">
-              <FormControl readOnly value={`${u.name} ${u.id} ${u.roomID} ${u.themeColor}`}
+              <FormControl style={{backgroundColor : u.themeColor, color: "white"}} readOnly value={`${u.name} ${u.id} ${u.roomID} ${u.themeColor}`}
               />
-              <Button variant="outline-secondary" id="button-addon2">
-                <DeleteOutlined />
-              </Button>
+              <DropdownButton disabled={!(userData.id === u.id)} 
+                // variant="outline-secondary"
+                title=""
+                id="input-group-dropdown-2"
+                align="end"
+              >
+                {Colors.map((c,i) => <Dropdown.Item key={i} onClick={()=> changeUserColor(i,u)} style={{backgroundColor : c, color:"white"}}>{c}</Dropdown.Item>)}
+
+              </DropdownButton>
             </InputGroup>
+            
           )}
         </Panel>
       </Collapse>

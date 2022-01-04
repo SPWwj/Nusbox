@@ -5,3 +5,10 @@
 .chat-right{
     text-align: right;
 }
+.dropdown-menu{
+    border: none;
+}
+.dropdown-item:hover{
+        border: dotted;
+
+}
